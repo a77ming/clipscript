@@ -2,9 +2,6 @@ import { Subtitle } from './srt-parser';
 import { ReelScript } from './ai-analyzer';
 import { DEFAULT_API_KEY, DEFAULT_BASE_URL, DEFAULT_MODEL } from './config';
 
-/**
- * 客户端AI分析器 - 直接在浏览器/Electron中调用OpenAI API
- */
 export class ClientAIAnalyzer {
   private apiKey: string;
   private baseURL: string;
@@ -12,13 +9,32 @@ export class ClientAIAnalyzer {
 
   constructor(
     apiKey?: string,
-    baseURL: string = DEFAULT_BASE_URL,
-    model: string = DEFAULT_MODEL
+    baseURL?: string,
+    model?: string
   ) {
-    // 如果没有提供API密钥，使用默认配置
-    this.apiKey = apiKey || DEFAULT_API_KEY;
-    this.baseURL = baseURL;
-    this.model = model;
+    const getStoredValue = (key: string) => {
+      if (typeof window === 'undefined') return '';
+      try {
+        return localStorage.getItem(key) || '';
+      } catch {
+        return '';
+      }
+    };
+
+    const normalizeBaseURL = (url: string) => {
+      const trimmed = url.trim().replace(/\/+$/, '');
+      if (!trimmed) return '';
+      if (trimmed.endsWith('/v1')) return trimmed;
+      return `${trimmed}/v1`;
+    };
+
+    const storedApiKey = getStoredValue('openai_api_key');
+    const storedBaseURL = getStoredValue('openai_base_url');
+    const storedModel = getStoredValue('openai_model');
+
+    this.apiKey = apiKey || storedApiKey || DEFAULT_API_KEY;
+    this.baseURL = normalizeBaseURL(baseURL || storedBaseURL || DEFAULT_BASE_URL);
+    this.model = model || storedModel || DEFAULT_MODEL;
   }
 
   async analyzeHighlights(
@@ -32,13 +48,60 @@ export class ClientAIAnalyzer {
       .map((sub) => `[${sub.start_time} - ${sub.end_time}] ${sub.text}`)
       .join('\n');
 
-    // 动态导入prompt生成函数
     const { generatePrompt } = await import('./prompts');
     const prompt = generatePrompt(synopsis, subtitleText, maxHighlights, minDuration, maxDuration);
 
-    try {
-      console.log('开始调用AI API...');
-      console.log('使用的API地址:', this.baseURL);
+    const extractJsonArray = (resultText: string) => {
+      const jsonStart = resultText.indexOf('[');
+      const jsonEnd = resultText.lastIndexOf(']') + 1;
+
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        const jsonString = resultText.substring(jsonStart, jsonEnd);
+        console.log('Extracted JSON length:', jsonString.length);
+        try {
+          const parsed = JSON.parse(jsonString);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (err) {
+          console.error('Failed to parse JSON:', err);
+        }
+      }
+
+      return [];
+    };
+
+    const buildSupplementPrompt = (existing: ReelScript[], missing: number) => {
+      const existingTimes = existing
+        .map((item) => `${item.start_time} - ${item.end_time}`)
+        .filter(Boolean)
+        .slice(0, 50)
+        .join('\n');
+
+      return `Return ${missing} more clip candidates.
+
+Requirements:
+1. Return only a JSON array with exactly ${missing} items.
+2. Keep the same schema as the previous response.
+3. Avoid duplicating these ranges unless absolutely necessary. If you reuse a range, justify it with a different editorial angle.
+
+Existing ranges:
+${existingTimes || '(none)'}
+
+Creative brief:
+${synopsis || '(No extra brief provided. Infer the strongest angle from the subtitles.)'}
+
+Transcript:
+${subtitleText}
+`;
+    };
+
+    const callChat = async (promptText: string, maxTokens: number) => {
+      console.log('Calling model API...');
+      console.log('Base URL:', this.baseURL);
+      console.log('Model:', this.model);
+
+      const matchedModel = this.model;
 
       const response = await fetch(`${this.baseURL}/chat/completions`, {
         method: 'POST',
@@ -47,59 +110,83 @@ export class ClientAIAnalyzer {
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: this.model,
+          model: matchedModel,
           messages: [
             {
               role: 'system',
-              content: '你是一位专业的短视频二创内容制作人，精通Facebook原创性政策。你必须确保每个Reel方案都包含独特的画外音分析、创意性剪辑手法、信息字幕和新信息内容。输出格式严格按照要求的JSON格式，且必须通过原创性自检。',
+              content: 'You are an expert editor for short-form social clips. Return only useful, specific clip ideas with editorial value.',
             },
-            { role: 'user', content: prompt },
+            { role: 'user', content: promptText },
           ],
           temperature: 0.7,
-          max_tokens: 6000,
+          max_tokens: maxTokens,
         }),
       });
 
-      console.log('API响应状态:', response.status);
+      console.log('API status:', response.status);
+
+      const rawText = await response.text();
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('API错误响应:', errorData);
+        console.error('API error response:', rawText);
 
         if (response.status === 401) {
-          throw new Error('API密钥无效或已过期');
+          throw new Error('The API key is invalid or expired.');
         } else if (response.status === 429) {
-          throw new Error('API请求频率超限或余额不足');
+          throw new Error('The provider rate-limited the request or the account has insufficient quota.');
         } else if (response.status === 500) {
-          throw new Error('API服务器错误');
+          throw new Error('The model provider returned a server error.');
         }
 
-        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('API响应成功，正在解析结果...');
+      try {
+        const data = JSON.parse(rawText);
+        return data.choices?.[0]?.message?.content || '';
+      } catch (err) {
+        console.warn('Provider returned non-JSON payload, falling back to raw text parsing.');
+        return rawText || '';
+      }
+    };
 
-      const resultText = data.choices[0]?.message?.content || '';
-      console.log('AI返回的内容长度:', resultText.length);
+    try {
+      const baseTokens = Math.min(6000, 1200 + maxHighlights * 350);
+      let resultText = await callChat(prompt, baseTokens);
+      console.log('API response received. Parsing clip ideas...');
 
-      // 解析JSON
-      const jsonStart = resultText.indexOf('[');
-      const jsonEnd = resultText.lastIndexOf(']') + 1;
+      let reelScripts = extractJsonArray(resultText);
+      console.log('Parsed clip count:', reelScripts.length);
 
-      if (jsonStart !== -1 && jsonEnd > jsonStart) {
-        const jsonString = resultText.substring(jsonStart, jsonEnd);
-        console.log('提取的JSON长度:', jsonString.length);
+      let attempts = 2;
+      while (reelScripts.length < maxHighlights && attempts > 0) {
+        const missing = maxHighlights - reelScripts.length;
+        console.warn(`Not enough clips returned. Requesting ${missing} more...`);
 
-        const reelScripts = JSON.parse(jsonString);
-        console.log('成功解析，找到', reelScripts.length, '个高光片段');
-        return reelScripts;
+        const supplementPrompt = buildSupplementPrompt(reelScripts, missing);
+        const supplementTokens = Math.min(4000, 800 + missing * 350);
+        const supplementText = await callChat(supplementPrompt, supplementTokens);
+        const supplementScripts = extractJsonArray(supplementText);
+
+        if (supplementScripts.length > 0) {
+          reelScripts = reelScripts.concat(supplementScripts);
+          console.log('Clip count after supplement:', reelScripts.length);
+        }
+
+        attempts -= 1;
       }
 
-      console.error('未找到有效的JSON数组');
-      return [];
+      if (reelScripts.length < maxHighlights) {
+        throw new Error(`The model returned too few clip candidates: expected ${maxHighlights}, got ${reelScripts.length}. Retry or lower the clip count.`);
+      }
+
+      if (reelScripts.length > maxHighlights) {
+        reelScripts = reelScripts.slice(0, maxHighlights);
+      }
+
+      return reelScripts;
     } catch (error: any) {
-      console.error('AI分析失败 - 详细错误:', {
+      console.error('AI analysis failed:', {
         message: error.message,
         stack: error.stack,
       });
@@ -108,7 +195,7 @@ export class ClientAIAnalyzer {
         throw error;
       }
 
-      throw new Error(`AI分析失败: ${error.message || '未知错误'}`);
+      throw new Error(`AI analysis failed: ${error.message || 'Unknown error'}`);
     }
   }
 }

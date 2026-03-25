@@ -1,159 +1,152 @@
-# AI高光剪辑工具
+<p align="center">
+  <img src="./public/social-card.svg" alt="ClipScript social card" />
+</p>
 
-智能视频高光片段自动识别工具，支持AI自动分析并生成专业的剪辑执行方案，支持一键切合并成视频。
+<p align="center">
+  <a href="https://github.com/a77ming/clipscript/blob/main/README.md">English</a>
+  ·
+  <a href="https://github.com/a77ming/clipscript/blob/main/README.zh-CN.md">简体中文</a>
+</p>
 
-## 功能特点
+<p align="center">
+  <a href="https://github.com/a77ming/clipscript/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/a77ming/clipscript/ci.yml?branch=main&label=ci" alt="CI status" /></a>
+  <a href="https://github.com/a77ming/clipscript"><img src="https://img.shields.io/github/stars/a77ming/clipscript?color=111216" alt="GitHub stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-111216" alt="MIT license" /></a>
+  <img src="https://img.shields.io/badge/OpenAI-compatible-111216?logo=openai&logoColor=white" alt="OpenAI compatible" />
+</p>
 
-- **上传SRT字幕** - 自动解析SRT字幕文件
-- **AI智能分析** - 使用GPT-4o识别高光片段
-- **视频切合并成** - 一键将选中片段合成完整视频
-- **单独切片下载** - 每个高光片段可单独下载
-- **Facebook原创性** - 生成的方案符合Facebook原创性标准
-- **详细执行表** - 生成包含时间码、画外音、剪辑手法的详细方案
+# ClipScript
 
----
+Turn subtitle files into short-form clips with AI-generated edit briefs and one-click exports.
 
-## Docker 部署（推荐 ⭐）
+`ClipScript` is a subtitle-first editing tool for creators. You upload an `.srt` file, set clip constraints, and let AI propose the strongest moments to cut into Shorts, Reels, or TikTok videos. After review, you can upload the source video and export merged clips plus an execution table.
 
-### 前置要求
+## Demo
 
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+![ClipScript demo](./public/screenshots/demo.gif)
 
-### 一键启动
+## Why it is useful
+
+- Clear input: subtitle files or transcripts already used in many editing workflows
+- Clear output: clip ideas with timestamps, hooks, captions, and editing direction
+- Low setup cost: OpenAI-compatible API plus local `ffmpeg`
+- Good for creators, editors, podcast teams, interview channels, and educational content
+
+## Try the demo
+
+- Start the app locally, then open the built-in demo project with no API call required:
+  `http://localhost:3000/preview?demo=1`
+- Or inspect the sample subtitle file:
+  [`public/examples/founder-confession-demo.srt`](./public/examples/founder-confession-demo.srt)
+
+## Screenshots
+
+### Home
+
+![ClipScript home screen](./public/screenshots/home.png)
+
+### Clip review
+
+![ClipScript preview screen](./public/screenshots/preview.png)
+
+## What ClipScript generates
+
+- Suggested clip ranges
+- Hook subtitles for the opening beat
+- Captions and emphasis ideas
+- Voiceover angle for commentary-style edits
+- Editing direction for pacing, framing, and sequencing
+- CSV execution table for editors and operators
+
+## Typical use cases
+
+- Podcast episode clipping
+- Interview and talk highlights
+- Drama or story recap moments
+- Course snippets and educational highlights
+- Commentary and reaction workflows that start from subtitles
+
+## Current capabilities
+
+- Subtitle-first highlight discovery from `.srt`
+- AI-generated hook, title, captions, voiceover angle, and editing direction
+- Adjustable clip count and duration range
+- OpenAI-compatible model API support
+- Source-video upload and one-click clip export
+- Execution table export for editors and operators
+
+## Workflow
+
+```text
+.srt subtitles
+  -> AI selects strong moments
+  -> hook / caption / voiceover suggestions
+  -> human review
+  -> source video upload
+  -> clip exports + execution table
+```
+
+## Quick start
+
+### Requirements
+
+- Node.js 20+
+- `ffmpeg` installed and available in `PATH`
+
+### Local development
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/a77ming/jianying-highlight-web.git
-cd jianying-highlight-web
-
-# 2. 启动服务（首次会自动构建镜像）
-docker-compose up -d
-
-# 3. 访问应用
-# 浏览器打开 http://localhost:3000
-```
-
-### 常用命令
-
-| 命令 | 说明 |
-|------|------|
-| `docker-compose up -d` | 后台启动服务 |
-| `docker-compose down` | 停止服务 |
-| `docker-compose restart` | 重启服务 |
-| `docker-compose logs -f` | 查看日志 |
-| `docker-compose build --no-cache` | 重新构建镜像 |
-
-### 修改端口
-
-编辑 `docker-compose.yml` 第 10 行：
-
-```yaml
-ports:
-  - "8080:3000"  # 改为 8080 端口
-```
-
-### 目录说明
-
-```
-jianying-highlight-web/
-├── uploads/    # 上传的视频文件（临时）
-└── outputs/    # 处理完成的视频（可下载）
-```
-
----
-
-## 本地开发
-
-```bash
-# 安装依赖
+git clone https://github.com/a77ming/clipscript.git
+cd clipscript
 npm install
-
-# 开发模式（热重载）
+cp .env.example .env
 npm run dev
-
-# 构建生产版本
-npm run build
-npm start
 ```
 
----
+Open `http://localhost:3000`.
 
-## 使用流程
+Then:
 
-```
-1. 上传 SRT 字幕文件
-         ↓
-2. AI 自动分析生成高光片段方案
-         ↓
-3. 选择需要的片段（可多选）
-         ↓
-4. 上传源视频文件
-         ↓
-5. 点击「开始切合并成」
-         ↓
-6. 下载成品：
-   - 合成视频（所有片段合并）
-   - 单独切片（每个片段单独下载）
-   - 剪辑执行表
+1. Click the `Model API` button in the top-right corner
+2. Paste your API key
+3. Set a compatible base URL and model if needed
+4. Upload an `.srt` file
+5. Review the generated clip ideas
+6. Upload the source video on the preview page to export deliverables
+
+## Docker
+
+```bash
+docker compose up -d --build
 ```
 
----
+## Configuration
 
-## API 配置
+Environment variables are optional. The browser UI is the main configuration surface.
 
-API 密钥已内置在代码中（`lib/config.ts`），开箱即用，无需配置。
-
-如需修改默认配置，请编辑 `lib/config.ts`：
-
-```typescript
-export const DEFAULT_API_KEY = 'sk-your-api-key';      // API 密钥
-export const DEFAULT_BASE_URL = 'https://yunwu.ai/v1';  // API 地址
-export const DEFAULT_MODEL = 'gpt-4o';                  // 使用模型
+```bash
+API_BASE_URL=https://api.openai.com/v1
+API_MODEL=gpt-4o-mini
 ```
 
----
+## Roadmap
 
-## 技术栈
+- Better preview and approval flow
+- Transcript support beyond `.srt`, including `.vtt` and plain text
+- Batch jobs for creators with episode libraries
+- Stronger paper-edit exports for editors
+- Desktop packaging polish for macOS and Windows
 
-- **框架**: Next.js 16 (App Router)
-- **语言**: TypeScript
-- **样式**: Tailwind CSS
-- **AI**: OpenAI API (GPT-4o)
-- **视频处理**: FFmpeg
-- **部署**: Docker
+## Contributing
 
----
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-## 项目结构
+## Notes
 
-```
-jianying-highlight-web/
-├── app/
-│   ├── api/
-│   │   ├── upload/route.ts         # 视频上传
-│   │   ├── process-video/route.ts  # 视频切合并成
-│   │   └── download/[filename]/    # 文件下载
-│   ├── preview/page.tsx            # 结果预览页（含下载功能）
-│   └── page.tsx                    # 首页（上传字幕）
-├── lib/
-│   ├── video-processor.ts          # FFmpeg 视频处理
-│   ├── client-ai-analyzer.ts       # 客户端 AI 分析
-│   └── config.ts                   # API 配置
-├── Dockerfile                      # Docker 构建文件
-├── docker-compose.yml              # Docker Compose 配置
-└── DOCKER_DEPLOY.md                # Docker 部署详细指南
-```
+- API keys are stored in local browser storage.
+- This project expects an OpenAI-compatible API.
+- `ffmpeg` is required for actual video slicing and merging.
 
----
-
-## 文档
-
-- [Docker 部署指南](./DOCKER_DEPLOY.md)
-- [用户使用指南](./用户使用指南.md)
-
----
-
-## 许可证
+## License
 
 MIT

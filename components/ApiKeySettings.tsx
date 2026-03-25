@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { APP_NAME, DEFAULT_BASE_URL, DEFAULT_MODEL } from '@/lib/config';
 
 interface ApiKeySettingsProps {
   onApiKeyChange?: (apiKey: string) => void;
@@ -8,29 +9,96 @@ interface ApiKeySettingsProps {
 
 export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) {
   const [apiKey, setApiKey] = useState('');
+  const [baseURL, setBaseURL] = useState('');
+  const [model, setModel] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [modelList, setModelList] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelError, setModelError] = useState('');
 
   useEffect(() => {
-    // 从localStorage加载API密钥
+    if (apiKey && baseURL) {
+      const currentModel = model;
+      const timer = setTimeout(() => {
+        const loadModels = async () => {
+          setLoadingModels(true);
+          setModelError('');
+
+          try {
+            const response = await fetch('/api/models', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ apiKey, baseURL }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Unable to fetch models.');
+            }
+
+            const data = await response.json();
+            const models = data.models || [];
+            setModelList(models);
+
+            if (models.length > 0 && !models.includes(currentModel)) {
+              setModel(models[0]);
+            }
+          } catch (err: any) {
+            console.error('Failed to fetch models:', err);
+            setModelError(err.message || 'Could not fetch models. Enter one manually.');
+            setModelList([]);
+          } finally {
+            setLoadingModels(false);
+          }
+        };
+
+        void loadModels();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [apiKey, baseURL, model]);
+
+  useEffect(() => {
     const savedApiKey = localStorage.getItem('openai_api_key') || '';
+    const savedBaseURL = localStorage.getItem('openai_base_url') || '';
+    const savedModel = localStorage.getItem('openai_model') || '';
     setApiKey(savedApiKey);
+    setBaseURL(savedBaseURL || DEFAULT_BASE_URL);
+    setModel(savedModel || DEFAULT_MODEL);
     if (savedApiKey && onApiKeyChange) {
       onApiKeyChange(savedApiKey);
     }
   }, [onApiKeyChange]);
 
+  const normalizeBaseURL = (url: string) => {
+    const trimmed = url.trim().replace(/\/+$/, '');
+    if (!trimmed) return '';
+    if (trimmed.endsWith('/v1')) return trimmed;
+    return `${trimmed}/v1`;
+  };
+
   const handleSave = () => {
-    localStorage.setItem('openai_api_key', apiKey);
+    const normalizedBaseURL = baseURL ? normalizeBaseURL(baseURL) : DEFAULT_BASE_URL;
+    localStorage.setItem('openai_api_key', apiKey.trim());
+    localStorage.setItem('openai_base_url', normalizedBaseURL);
+    localStorage.setItem('openai_model', model.trim() || DEFAULT_MODEL);
     if (onApiKeyChange) {
-      onApiKeyChange(apiKey);
+      onApiKeyChange(apiKey.trim());
     }
     setIsOpen(false);
   };
 
   const handleClear = () => {
     setApiKey('');
+    setBaseURL(DEFAULT_BASE_URL);
+    setModel(DEFAULT_MODEL);
+    setModelList([]);
     localStorage.removeItem('openai_api_key');
+    localStorage.removeItem('openai_base_url');
+    localStorage.removeItem('openai_model');
     if (onApiKeyChange) {
       onApiKeyChange('');
     }
@@ -38,27 +106,29 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
 
   return (
     <>
-      {/* 设置按钮 */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-50 bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 shadow-lg"
-        title="API设置"
+        className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-full border border-black/10 bg-slate-950 px-4 py-2 text-white shadow-lg transition-colors hover:bg-slate-800"
+        title="Model API settings"
       >
-        <span>⚙️</span>
-        <span className="text-sm">API设置</span>
+        <span className="text-sm font-medium">Model API</span>
       </button>
 
-      {/* 设置弹窗 */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                🔑 API密钥配置
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {APP_NAME} settings
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your credentials are stored only in this browser.
+                </p>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+                className="text-2xl text-gray-500 hover:text-gray-700"
               >
                 ×
               </button>
@@ -66,8 +136,8 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  OpenAI API密钥
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  API key
                 </label>
                 <div className="relative">
                   <input
@@ -75,56 +145,92 @@ export default function ApiKeySettings({ onApiKeyChange }: ApiKeySettingsProps) 
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="sk-..."
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
-                      focus:outline-none focus:ring-2 focus:ring-purple-500
-                      bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                      placeholder-gray-400 dark:placeholder-gray-500
-                      transition-colors pr-12"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                   <button
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-500 hover:text-gray-700"
                   >
                     {showApiKey ? '🙈' : '👁️'}
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  您的API密钥将安全地保存在本地浏览器中，不会上传到任何服务器
+                <p className="mt-2 text-xs text-gray-500">
+                  Nothing is stored server-side. Requests go only to the provider you configure.
                 </p>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                  💡 如何获取API密钥？
-                </h3>
-                <ol className="text-xs text-blue-800 dark:text-blue-400 space-y-1 list-decimal list-inside">
-                  <li>访问 OpenAI 官网或代理商网站</li>
-                  <li>注册账号并获取API密钥</li>
-                  <li>将API密钥粘贴到上方输入框</li>
-                  <li>点击"保存"按钮</li>
-                </ol>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Base URL
+                </label>
+                <input
+                  type="text"
+                  value={baseURL}
+                  onChange={(e) => setBaseURL(e.target.value)}
+                  placeholder="https://api.openai.com/v1"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <p className="mt-2 text-xs text-gray-500">
+                  Any OpenAI-compatible endpoint works. <code>/v1</code> is auto-appended if missing.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Model
+                  {loadingModels && <span className="ml-2 text-blue-500">Loading...</span>}
+                </label>
+
+                {modelList.length > 0 ? (
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    {modelList.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder={loadingModels ? 'Loading model list...' : 'gpt-4o-mini'}
+                    disabled={loadingModels}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                )}
+
+                {modelError && (
+                  <p className="mt-2 text-xs text-orange-500">{modelError}</p>
+                )}
+                {modelList.length > 0 && (
+                  <p className="mt-2 text-xs text-green-500">
+                    Loaded {modelList.length} models
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleSave}
                   disabled={!apiKey}
-                  className={`flex-1 py-3 px-6 rounded-lg font-medium text-white
-                    ${!apiKey
-                      ? 'bg-gray-400 cursor-not-allowed'
+                  className={`flex-1 rounded-lg px-6 py-3 font-medium text-white ${
+                    !apiKey
+                      ? 'cursor-not-allowed bg-gray-400'
                       : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-                    }
-                    transition-all duration-200`}
+                  } transition-all duration-200`}
                 >
-                  💾 保存
+                  Save
                 </button>
                 <button
                   onClick={handleClear}
-                  className="px-6 py-3 rounded-lg font-medium text-gray-700 dark:text-gray-300
-                    bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600
-                    transition-colors"
+                  className="rounded-lg bg-gray-200 px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-300"
                 >
-                  清除
+                  Clear
                 </button>
               </div>
             </div>

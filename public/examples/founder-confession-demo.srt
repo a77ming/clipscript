@@ -1,0 +1,71 @@
+1
+00:00:01,000 --> 00:00:05,000
+Everyone relax. Today's demo is just about confidence.
+
+2
+00:00:05,500 --> 00:00:10,000
+If we sound certain enough, nobody will ask why the dashboard is still blank.
+
+3
+00:00:11,000 --> 00:00:15,000
+Wait, you told investors the onboarding flow was already live?
+
+4
+00:00:15,500 --> 00:00:19,500
+Technically it's live. It just fails for every real customer.
+
+5
+00:00:20,000 --> 00:00:24,000
+That is not what the deck says.
+
+6
+00:00:25,000 --> 00:00:29,000
+The deck says what the future wants to hear.
+
+7
+00:00:30,000 --> 00:00:34,500
+You cannot call imagination a roadmap in front of the board.
+
+8
+00:00:35,000 --> 00:00:39,000
+I can if the board only looks up when the revenue chart turns red.
+
+9
+00:00:40,000 --> 00:00:45,000
+So the product has never actually passed a full production test?
+
+10
+00:00:45,500 --> 00:00:49,500
+Passed? No. Survived? Briefly.
+
+11
+00:00:50,000 --> 00:00:54,000
+And you're still opening with the line "the system is stable"?
+
+12
+00:00:54,500 --> 00:00:58,500
+I'm opening with "our momentum is undeniable."
+
+13
+00:00:59,000 --> 00:01:03,500
+That's not an update. That's a confession with branding.
+
+14
+00:01:04,000 --> 00:01:08,000
+Fine. What's the truth you want me to say?
+
+15
+00:01:08,500 --> 00:01:12,500
+That we sold the dream before we built the floor.
+
+16
+00:01:13,000 --> 00:01:17,000
+And if they walk?
+
+17
+00:01:17,500 --> 00:01:21,500
+Then at least the lie stops getting payroll.
+
+18
+00:01:22,000 --> 00:01:32,000
+Okay. No slogans. No fog. We tell them exactly where the product breaks.

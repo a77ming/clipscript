@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ClientAIAnalyzer } from '@/lib/client-ai-analyzer';
+import DemoProjectButton from '@/components/DemoProjectButton';
+import { ClipProjectPreviewData } from '@/lib/clip-project';
 import { SRTParser } from '@/lib/srt-parser';
 
 export default function FileUpload() {
@@ -12,15 +13,23 @@ export default function FileUpload() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 自定义参数
   const [maxHighlights, setMaxHighlights] = useState(5);
   const [minDuration, setMinDuration] = useState(8);
   const [maxDuration, setMaxDuration] = useState(15);
 
+  const getApiConfig = () => {
+    if (typeof window === 'undefined') return {};
+    return {
+      apiKey: localStorage.getItem('openai_api_key') || '',
+      baseURL: localStorage.getItem('openai_base_url') || '',
+      model: localStorage.getItem('openai_model') || '',
+    };
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && !selectedFile.name.endsWith('.srt')) {
-      setError('请选择 .srt 格式的字幕文件');
+      setError('Please choose an `.srt` subtitle file.');
       return;
     }
     setFile(selectedFile || null);
@@ -31,7 +40,7 @@ export default function FileUpload() {
     e.preventDefault();
 
     if (!file) {
-      setError('请选择字幕文件');
+      setError('Please select a subtitle file.');
       return;
     }
 
@@ -46,41 +55,65 @@ export default function FileUpload() {
       const stats = srtParser.getStatistics();
 
       if (subtitles.length === 0) {
-        setError('字幕文件解析失败或为空');
+        setError('The subtitle file is empty or could not be parsed.');
         return;
       }
 
       if (maxDuration < minDuration) {
-        setError('最大时长不能小于最小时长');
+        setError('Max duration must be greater than or equal to min duration.');
         return;
       }
 
       if (maxHighlights < 1 || maxHighlights > 20) {
-        setError('最大片段数必须在 1-20 之间');
+        setError('Clip count must stay between 1 and 20.');
         return;
       }
 
-      const aiAnalyzer = new ClientAIAnalyzer();
-      const reelScripts = await aiAnalyzer.analyzeHighlights(
-        subtitles,
-        synopsis || '',
-        maxHighlights,
-        minDuration,
-        maxDuration
-      );
+      const apiConfig = getApiConfig();
 
-      if (reelScripts.length === 0) {
-        setError('AI 未能识别高光片段，请尝试调整参数');
+      if (!apiConfig.apiKey) {
+        setError('Set an API key from the top-right settings button first.');
         return;
       }
 
-      const data = {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: apiConfig.apiKey,
+          baseURL: apiConfig.baseURL,
+          model: apiConfig.model,
+          subtitles,
+          synopsis,
+          maxHighlights,
+          minDuration,
+          maxDuration,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Analysis failed.');
+      }
+
+      const reelScripts = result.reelScripts;
+
+      if (!reelScripts || reelScripts.length === 0) {
+        setError('AI did not find strong clip candidates. Try a different brief or tighter duration range.');
+        return;
+      }
+
+      const data: ClipProjectPreviewData = {
         success: true,
         fileName: file.name,
         stats,
         reelScripts,
         srtContent: content,
         synopsis,
+        source: 'upload',
         parameters: {
           maxHighlights,
           minDuration,
@@ -92,21 +125,22 @@ export default function FileUpload() {
       localStorage.setItem('previewData', JSON.stringify(data));
       router.push('/preview');
     } catch (err: any) {
-      console.error('处理失败:', err);
-      setError(err.message || '处理失败，请重试');
+      console.error('Subtitle analysis failed:', err);
+      setError(err.message || 'Something went wrong while analyzing the subtitles.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 字幕文件上传 */}
+    <div className="mx-auto max-w-3xl">
+      <div className="space-y-4">
+        <DemoProjectButton />
+        <div className="rounded-[1.5rem] border border-black/10 bg-white/80 p-8 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              字幕文件 <span className="text-red-500">*</span>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Subtitle file <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -126,20 +160,19 @@ export default function FileUpload() {
             </div>
             {file && (
               <p className="mt-2 text-sm text-green-600">
-                ✓ 已选择: {file.name}
+                Selected: {file.name}
               </p>
             )}
           </div>
 
-          {/* 短剧简介 */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              短剧简介
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Optional creative brief
             </label>
             <textarea
               value={synopsis}
               onChange={(e) => setSynopsis(e.target.value)}
-              placeholder="请输入短剧的简介，帮助 AI 更好地理解内容..."
+              placeholder="Describe the story, target audience, or angle you want the clips to emphasize."
               rows={4}
               className="w-full px-4 py-3 border border-slate-300 rounded-lg
                 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
@@ -149,17 +182,15 @@ export default function FileUpload() {
             />
           </div>
 
-          {/* 自定义参数 */}
           <div className="bg-slate-50 rounded-lg p-5 border border-slate-200">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">
-              AI 参数设置
+              Clip constraints
             </h3>
 
             <div className="grid grid-cols-3 gap-4">
-              {/* 最大片段数 */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  片段数量
+                  Clip count
                 </label>
                 <input
                   type="number"
@@ -174,10 +205,9 @@ export default function FileUpload() {
                 />
               </div>
 
-              {/* 最小时长 */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  最小时长（秒）
+                  Min seconds
                 </label>
                 <input
                   type="number"
@@ -192,10 +222,9 @@ export default function FileUpload() {
                 />
               </div>
 
-              {/* 最大时长 */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  最大时长（秒）
+                  Max seconds
                 </label>
                 <input
                   type="number"
@@ -212,14 +241,12 @@ export default function FileUpload() {
             </div>
           </div>
 
-          {/* 错误提示 */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* 提交按钮 */}
           <button
             type="submit"
             disabled={loading}
@@ -235,13 +262,14 @@ export default function FileUpload() {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                分析中...
+                Analyzing...
               </>
             ) : (
-              '开始分析'
+              'Generate clip ideas'
             )}
           </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

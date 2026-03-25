@@ -5,6 +5,11 @@ export interface Subtitle {
   text: string;
 }
 
+export interface SubtitleStats {
+  subtitleCount: number;
+  totalDurationSeconds: number;
+}
+
 export class SRTParser {
   private content: string;
   public subtitles: Subtitle[] = [];
@@ -38,17 +43,17 @@ export class SRTParser {
     return this.subtitles;
   }
 
-  getStatistics() {
+  getStatistics(): SubtitleStats {
     if (this.subtitles.length === 0) {
-      return { 总字幕数: 0, 总时长秒数: 0 };
+      return { subtitleCount: 0, totalDurationSeconds: 0 };
     }
 
     const lastSubtitle = this.subtitles[this.subtitles.length - 1];
     const totalSeconds = this.timeToSeconds(lastSubtitle.end_time);
 
     return {
-      总字幕数: this.subtitles.length,
-      总时长秒数: totalSeconds,
+      subtitleCount: this.subtitles.length,
+      totalDurationSeconds: totalSeconds,
     };
   }
 

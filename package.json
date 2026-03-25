@@ -1,24 +1,50 @@
 {
-  "name": "jianying-highlight-web",
-  "version": "1.0.0",
+  "name": "clipscript",
+  "version": "0.1.0",
   "private": true,
+  "description": "Turn subtitles into short-form highlight clips with AI-generated edit briefs and one-click exports.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a77ming/clipscript.git"
+  },
+  "homepage": "https://github.com/a77ming/clipscript",
+  "bugs": {
+    "url": "https://github.com/a77ming/clipscript/issues"
+  },
+  "keywords": [
+    "ai-video",
+    "clip-generator",
+    "creator-tools",
+    "ffmpeg",
+    "nextjs",
+    "openai-compatible",
+    "short-form-video",
+    "subtitle",
+    "tiktok",
+    "video-editing"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:standalone": "cross-env STANDALONE=true next build",
+    "build:standalone": "next build",
+    "build:export": "cross-env EXPORT_STATIC=true next build",
     "package:standalone": "node scripts/package-standalone.js",
     "package:windows": "node scripts/build-windows-complete.js",
     "package:windows:simple": "node scripts/build-windows-package.js",
     "package:windows:portable": "node scripts/build-windows-complete-portable.js",
     "start": "next start",
     "start:standalone": "node server.js",
-    "lint": "next lint",
+    "lint": "eslint .",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:build:win": "npm run build && electron-builder --win",
-    "electron:build:mac": "npm run build && electron-builder --mac",
-    "electron:build:linux": "npm run build && electron-builder --linux"
+    "electron:build": "npm run build:export && electron-builder",
+    "electron:build:win": "npm run build:export && electron-builder --win",
+    "electron:build:mac": "npm run build:export && electron-builder --mac",
+    "electron:build:linux": "npm run build:export && electron-builder --linux"
   },
   "dependencies": {
     "@types/multer": "^1.4.12",
@@ -49,8 +75,8 @@
     "wait-on": "^9.0.3"
   },
   "build": {
-    "appId": "com.jianying.highlight",
-    "productName": "AI高光剪辑工具",
+    "appId": "com.clipscript.app",
+    "productName": "ClipScript",
     "directories": {
       "output": "dist"
     },

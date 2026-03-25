@@ -1,4 +1,5 @@
-// 默认API配置
-export const DEFAULT_API_KEY = 'sk-JiDUxeYDc9EnJ5Gmni1tYOvucP8o8WNmY78dvnV8lQq0wKW7';
-export const DEFAULT_BASE_URL = 'https://yunwu.ai/v1';
-export const DEFAULT_MODEL = 'gpt-4o';
+// Public-safe defaults for OpenAI-compatible providers.
+export const DEFAULT_API_KEY = process.env.API_KEY || '';
+export const DEFAULT_BASE_URL = process.env.API_BASE_URL || 'https://api.openai.com/v1';
+export const DEFAULT_MODEL = process.env.API_MODEL || 'gpt-4o-mini';
+export const APP_NAME = 'ClipScript';

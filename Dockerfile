@@ -6,9 +6,9 @@ WORKDIR /app
 # 安装 ffmpeg（用于视频处理）
 RUN apk add --no-cache ffmpeg
 
-# 安装依赖
+# 安装依赖（先删除 lock 文件以避免平台特定问题）
 COPY package*.json ./
-RUN npm ci
+RUN rm -f package-lock.json && npm install
 
 # 复制源代码
 COPY . .
