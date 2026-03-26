@@ -78,6 +78,16 @@ npm run dev
 docker compose up -d --build
 ```
 
+## 项目状态
+
+ClipScript 目前按公开维护中的仓库来管理，已经具备：
+
+- push 和 pull request 上的 CI
+- contributor 指南和 issue 模板
+- 已公开发布 release notes，包括 [`v0.1.1`](./docs/releases/v0.1.1.md)
+- 在 [`CODEOWNERS`](./.github/CODEOWNERS) 和 [`MAINTAINERS.md`](./MAINTAINERS.md) 里明确维护责任
+- 在 [`SUPPORT.md`](./SUPPORT.md) 和 [`SECURITY.md`](./SECURITY.md) 里说明支持与安全披露方式
+
 ## 工作流
 
 ```text
@@ -104,17 +114,22 @@ API_MODEL=gpt-4o-mini
 - 支持 `.vtt`、纯文本等更多 transcript 格式
 - 支持内容库批量处理
 - 更强的 paper-edit / editor handoff 导出
-- 更完善的 macOS 和 Windows 桌面版打包
+- 等 Web 工作流稳定后，再推进桌面版打包
 
 ## 参与贡献
 
 见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。
+
+## 支持
+
+见 [`SUPPORT.md`](./SUPPORT.md)。
 
 ## 说明
 
 - API Key 只保存在本地浏览器存储中。
 - 项目默认使用 OpenAI 兼容接口。
 - 真正的视频切片和合并依赖本地 `ffmpeg`。
+- `deploy.sh` 只是部署模板，运行前需要通过环境变量提供部署凭据。
 
 ## License
 

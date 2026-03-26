@@ -1,26 +1,34 @@
 # Support
 
-## What to include when asking for help
+## Getting help
 
-If you open an issue, please include:
+- Use GitHub Issues for reproducible bugs and concrete feature requests.
+- Use the bug report template when something is broken.
+- For security-sensitive issues, follow [`SECURITY.md`](./SECURITY.md) and do not open a public issue.
 
-- your operating system
-- your Node.js version
-- your browser
-- whether `ffmpeg` is installed and available in `PATH`
-- a small sample subtitle file if the bug depends on transcript structure
-- screenshots or logs when relevant
+## What maintainers need
 
-## Best channels
+Please include:
 
-- Bug reports: GitHub Issues
-- Feature requests: GitHub Issues
-- Security issues: [`SECURITY.md`](./SECURITY.md)
+- the input file type you used
+- the clip constraints you selected
+- your runtime environment
+- logs or screenshots when available
 
-## Good first contribution areas
+## Scope
 
-- transcript import support for `.vtt` and plain text
-- prompt and evaluation fixtures
-- export UX polish
-- docs and installation improvements
-- cross-platform packaging fixes
+ClipScript is maintained as an open-source tool for subtitle-first clipping workflows.
+
+Support is best for:
+
+- setup problems
+- reproducible app bugs
+- ffmpeg workflow issues
+- AI output parsing failures
+- contributor questions tied to the current roadmap
+
+Support is limited for:
+
+- custom model-provider debugging outside OpenAI-compatible APIs
+- private deployment work
+- requests that significantly broaden the product scope

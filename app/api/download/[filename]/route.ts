@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
 
-const projectRoot = process.cwd();
-const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(projectRoot, 'outputs');
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(projectRoot, 'uploads');
+const getOutputDir = () => process.env.OUTPUT_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'outputs');
+const getUploadDir = () => process.env.UPLOAD_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'uploads');
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
+    const outputDir = getOutputDir();
+    const uploadDir = getUploadDir();
     const { filename } = await params;
 
     const decodedFilename = decodeURIComponent(filename);
@@ -39,15 +40,15 @@ export async function GET(
       return null;
     };
 
-    let filePath = path.join(OUTPUT_DIR, safeFilename);
+    let filePath = path.join(outputDir, safeFilename);
     try {
       await fs.access(filePath);
     } catch {
-      const foundPath = await findFile(OUTPUT_DIR);
+      const foundPath = await findFile(outputDir);
       if (foundPath) {
         filePath = foundPath;
       } else {
-        filePath = path.join(UPLOAD_DIR, safeFilename);
+        filePath = path.join(uploadDir, safeFilename);
         try {
           await fs.access(filePath);
         } catch {

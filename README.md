@@ -120,6 +120,16 @@ Then:
 docker compose up -d --build
 ```
 
+## Project status
+
+ClipScript is maintained as an active public repository with:
+
+- CI on push and pull request
+- contributor guidelines and issue templates
+- published release notes, including [`v0.1.1`](./docs/releases/v0.1.1.md)
+- maintainer ownership defined in [`CODEOWNERS`](./.github/CODEOWNERS) and [`MAINTAINERS.md`](./MAINTAINERS.md)
+- support and disclosure paths in [`SUPPORT.md`](./SUPPORT.md) and [`SECURITY.md`](./SECURITY.md)
+
 ## Configuration
 
 Environment variables are optional. The browser UI is the main configuration surface.
@@ -135,7 +145,7 @@ API_MODEL=gpt-4o-mini
 - Transcript support beyond `.srt`, including `.vtt` and plain text
 - Batch jobs for creators with episode libraries
 - Stronger paper-edit exports for editors
-- Desktop packaging polish for macOS and Windows
+- Desktop packaging as a future follow-up once the web workflow is stable
 
 ## Project health
 
@@ -160,11 +170,16 @@ ClipScript is still early, but the contribution surface is already clear. Useful
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
+## Support
+
+See [`SUPPORT.md`](./SUPPORT.md).
+
 ## Notes
 
 - API keys are stored in local browser storage.
 - This project expects an OpenAI-compatible API.
 - `ffmpeg` is required for actual video slicing and merging.
+- `deploy.sh` is a template and requires deployment credentials via environment variables.
 
 ## License
 

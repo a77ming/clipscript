@@ -6,14 +6,16 @@ import { writeFile } from 'fs/promises';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const projectRoot = process.cwd();
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(projectRoot, 'uploads');
-const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(projectRoot, 'outputs');
+const getUploadDir = () => process.env.UPLOAD_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'uploads');
+const getOutputDir = () => process.env.OUTPUT_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'outputs');
 
 export async function POST(request: NextRequest) {
   try {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    await fs.mkdir(OUTPUT_DIR, { recursive: true });
+    const uploadDir = getUploadDir();
+    const outputDir = getOutputDir();
+
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.mkdir(outputDir, { recursive: true });
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
     const ext = path.extname(file.name);
     const safeName = file.name.replace(ext, '').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${safeName}_${timestamp}${ext}`;
-    const filePath = path.join(UPLOAD_DIR, fileName);
+    const filePath = path.join(uploadDir, fileName);
 
     await writeFile(filePath, buffer);
 

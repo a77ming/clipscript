@@ -6,12 +6,13 @@ import { VideoProcessor } from '@/lib/video-processor';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const projectRoot = process.cwd();
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(projectRoot, 'uploads');
-const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(projectRoot, 'outputs');
+const getUploadDir = () => process.env.UPLOAD_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'uploads');
+const getOutputDir = () => process.env.OUTPUT_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'outputs');
 
 export async function POST(request: NextRequest) {
   try {
+    const uploadDir = getUploadDir();
+    const outputDir = getOutputDir();
     const body = await request.json();
     const { videoFileName, reelScripts, videoName } = body;
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required video processing parameters.' }, { status: 400 });
     }
 
-    const videoPath = path.join(UPLOAD_DIR, videoFileName);
+    const videoPath = path.join(uploadDir, videoFileName);
 
     try {
       await fs.access(videoPath);
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       console.log('Processing progress:', progress);
     };
 
-    const processor = new VideoProcessor(OUTPUT_DIR, sendProgress);
+    const processor = new VideoProcessor(outputDir, sendProgress);
 
     const result = await processor.processVideo(
       videoPath,

@@ -1,29 +1,19 @@
 # Maintainers
 
-## Primary maintainer
+ClipScript is currently maintained by:
 
-- Ming
-  GitHub: [@a77ming](https://github.com/a77ming)
+- `@a77ming` (owner and primary maintainer)
 
-## Maintainer scope
+## Maintainer responsibilities
 
-The maintainer is currently responsible for:
+- Review and merge pull requests
+- Triage issues and bug reports
+- Cut releases and publish release notes
+- Keep setup, docs, and CI working for the public repository
+- Prioritize fixes that strengthen subtitle-first creator workflows
 
-- product direction and roadmap
-- issue triage and bug reproduction
-- release planning
-- documentation and community support
-- prompt and model workflow evaluation
-- packaging, deployment, and CI upkeep
+## Review and release expectations
 
-## Current maintenance priorities
-
-- make subtitle-to-clip generation more reliable across different speaking styles
-- improve evaluation coverage for clip quality, hooks, and export correctness
-- add more import formats beyond `.srt`
-- keep the local-first editing and export workflow simple to run
-
-## Contact
-
-For bugs and feature requests, open a GitHub issue.
-For security-sensitive reports, follow [`SECURITY.md`](./SECURITY.md).
+- Bug reports are usually triaged within a few days when reproducible details are included.
+- Small, scoped pull requests are preferred over broad feature bundles.
+- Releases are cut when there is a user-visible improvement, a meaningful bug fix, or security-related maintenance work.
