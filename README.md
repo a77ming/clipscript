@@ -137,6 +137,25 @@ API_MODEL=gpt-4o-mini
 - Stronger paper-edit exports for editors
 - Desktop packaging polish for macOS and Windows
 
+## Project health
+
+- Release notes: [`docs/releases/v0.1.0.md`](./docs/releases/v0.1.0.md)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+- Maintainer info: [`MAINTAINERS.md`](./MAINTAINERS.md)
+- Support guide: [`SUPPORT.md`](./SUPPORT.md)
+- OpenAI OSS application draft: [`docs/openai-oss-application.md`](./docs/openai-oss-application.md)
+- OpenAI credits usage plan: [`docs/openai-credits-plan.md`](./docs/openai-credits-plan.md)
+
+## Looking for contributions
+
+ClipScript is still early, but the contribution surface is already clear. Useful help right now includes:
+
+- transcript import support for `.vtt` and plain text
+- evaluation fixtures and regression checks for clip quality
+- preview and approval UX before export
+- packaging and cross-platform workflow polish
+- docs improvements for contributors and creators
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md).

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contribution guide
+    url: https://github.com/a77ming/clipscript/blob/main/CONTRIBUTING.md
+    about: Read the contribution workflow before opening a pull request.
+  - name: Support guide
+    url: https://github.com/a77ming/clipscript/blob/main/SUPPORT.md
+    about: See the recommended information to include for bug reports and setup help.
+  - name: Security policy
+    url: https://github.com/a77ming/clipscript/blob/main/SECURITY.md
+    about: Report security-sensitive issues privately.
