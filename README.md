@@ -153,6 +153,7 @@ API_MODEL=gpt-4o-mini
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 - Maintainer info: [`MAINTAINERS.md`](./MAINTAINERS.md)
 - Support guide: [`SUPPORT.md`](./SUPPORT.md)
+- OpenAI application fill guide: [`docs/openai-application-fill-guide.md`](./docs/openai-application-fill-guide.md)
 - OpenAI OSS application draft: [`docs/openai-oss-application.md`](./docs/openai-oss-application.md)
 - OpenAI credits usage plan: [`docs/openai-credits-plan.md`](./docs/openai-credits-plan.md)
 
